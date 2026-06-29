@@ -89,6 +89,7 @@ def main(argv: list[str]) -> int:
         (scratch / f"{video.stem}.json").write_text(
             json.dumps(result), encoding="utf-8"
         )
+        video.unlink()
     return 0
 
 

@@ -9,7 +9,7 @@ def test_load_config_reads_toml_and_env(config_files):
     assert cfg.collections == ["projects", "looksmax"]
     assert cfg.batch_size == 50
     assert cfg.keep_originals is False
-    assert cfg.dreck_mac == "60-CF-84-84-1B-D9"
+    assert cfg.dreck_mac == "AA-BB-CC-DD-EE-FF"
     assert cfg.ig_username == "bot"
     assert cfg.ig_password == "pw"
 

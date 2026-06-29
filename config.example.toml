@@ -3,7 +3,6 @@ output_dir = "/home/youruser/vault/wiki/inspiration"
 queue_dir = "./queue"
 db_path = "./inspiration.db"
 ig_session_path = "./session.json"
-poll_interval_hours = 4.0
 whisper_model = "large-v3"
 batch_size = 50
 keep_originals = false

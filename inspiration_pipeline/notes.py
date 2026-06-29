@@ -53,7 +53,7 @@ def render_note(
         f'url: "{reel.url}"\n'
         f'author: "{reel.author}"\n'
         f'collection: "{reel.collection}"\n'
-        f"category: {cls.category}\n"
+        f'category: "{cls.category}"\n'
         f"captured: {reel.taken_at}\n"
         f"filed: {filed_date}\n"
         "status: inbox\n"

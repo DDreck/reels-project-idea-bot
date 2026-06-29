@@ -17,7 +17,6 @@ class Config:
     output_dir: Path
     queue_dir: Path
     db_path: Path
-    poll_interval_hours: float
     whisper_model: str
     batch_size: int
     keep_originals: bool
@@ -63,7 +62,6 @@ def load_config(config_path: Path, env_path: Path | None = None) -> Config:
         output_dir=Path(raw["output_dir"]),
         queue_dir=Path(raw["queue_dir"]),
         db_path=Path(raw["db_path"]),
-        poll_interval_hours=float(raw["poll_interval_hours"]),
         whisper_model=str(raw["whisper_model"]),
         batch_size=int(raw["batch_size"]),
         keep_originals=bool(raw["keep_originals"]),

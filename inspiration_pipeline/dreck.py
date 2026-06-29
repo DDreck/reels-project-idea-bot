@@ -118,3 +118,16 @@ def sleep_host(config: Config, *, runner=subprocess.run) -> None:
     """
     runner(["ssh", _target(config), config.dreck_sleep_cmd],
            capture_output=True, text=True)
+
+
+def clear_scratch(config: Config, *, runner=subprocess.run) -> None:
+    """Remove leftover JSON and MP4 files from dreck's scratch directory.
+
+    Args:
+        config: Configuration with dreck host/user/scratch_dir.
+        runner: Subprocess runner (test seam). Non-zero exit is ignored
+            (del on an empty dir is benign).
+    """
+    scratch = config.dreck_scratch_dir.replace("/", "\\")
+    cmd = f'del /q "{scratch}\\*.json" "{scratch}\\*.mp4"'
+    runner(["ssh", _target(config), cmd], capture_output=True, text=True)

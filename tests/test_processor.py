@@ -37,6 +37,9 @@ class FakeDreck:
                 json.dumps({"transcript": "T", "ocr": "O"}), encoding="utf-8"
             )
 
+    def clear_scratch(self, config):
+        self.calls.append("clear_scratch")
+
     def sleep_host(self, config):
         self.calls.append("sleep_host")
 
@@ -78,3 +81,30 @@ def test_process_dreck_unreachable_leaves_queued(tmp_path, dummy_config):
                           dreck_mod=FakeDreck(config.queue_dir, reachable=False))
     assert n == 0
     assert len(db.records_by_status(conn, "downloaded")) == 2
+
+
+def test_process_partial_results_fails_missing(tmp_path, dummy_config):
+    config = dummy_config
+    object.__setattr__(config, "queue_dir", tmp_path / "q")
+    object.__setattr__(config, "output_dir", tmp_path / "out")
+    conn = _seed(config)
+
+    class PartialDreck(FakeDreck):
+        def pull_results(self, config, local_dir):
+            self.calls.append("pull_results")
+            # Write transcript only for sc1; sc2 is intentionally missing.
+            (local_dir / "sc1.json").write_text(
+                json.dumps({"transcript": "T", "ocr": "O"}), encoding="utf-8"
+            )
+
+    cls = Classification("c", "T", "s", [], "Projects")
+    n = processor.process(conn, config, dreck_mod=PartialDreck(config.queue_dir),
+                          classifier=lambda *a, **k: cls)
+    assert n == 1
+    filed = db.records_by_status(conn, "filed")
+    assert len(filed) == 1
+    assert filed[0]["shortcode"] == "sc1"
+    # sc2 failed but attempts(1) < max_attempts(3): record_failure resets to 'downloaded'
+    still_queued = db.records_by_status(conn, "downloaded")
+    assert len(still_queued) == 1
+    assert still_queued[0]["shortcode"] == "sc2"

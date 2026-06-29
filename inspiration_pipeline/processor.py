@@ -29,6 +29,7 @@ def process(conn, config: Config, *, dreck_mod=dreck_default,
         dreck_mod.push(config, [v for v in videos if v.exists()])
         dreck_mod.run_transcription(config)
         dreck_mod.pull_results(config, config.queue_dir)
+        dreck_mod.clear_scratch(config)
     finally:
         dreck_mod.sleep_host(config)
     filed = 0

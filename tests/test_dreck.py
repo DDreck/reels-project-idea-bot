@@ -60,3 +60,16 @@ def test_pull_results_builds_scp_glob(dummy_config, tmp_path):
     assert calls[0][0] == "scp"
     assert "*.json" in calls[0][1]
     assert str(tmp_path) == calls[0][2]
+
+
+def test_clear_scratch_removes_json_and_mp4(dummy_config):
+    calls = []
+    dreck.clear_scratch(
+        dummy_config,
+        runner=lambda cmd, **kw: calls.append(cmd) or _ok(cmd),
+    )
+    cmd_str = " ".join(calls[0])
+    scratch = dummy_config.dreck_scratch_dir.replace("/", "\\")
+    assert "*.json" in cmd_str
+    assert "*.mp4" in cmd_str
+    assert scratch in cmd_str

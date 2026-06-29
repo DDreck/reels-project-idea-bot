@@ -17,7 +17,7 @@ def test_render_note_contains_frontmatter_and_sections():
     note = render_note(_reel(), "spoken words", "ON SCREEN", _cls(), "2026-06-28")
     assert "source: instagram-reel" in note
     assert 'url: "http://x/1"' in note
-    assert "category: 3d-print" in note
+    assert 'category: "3d-print"' in note
     assert "captured: 2026-06-25" in note
     assert "filed: 2026-06-28" in note
     assert "[[Projects]]" in note
