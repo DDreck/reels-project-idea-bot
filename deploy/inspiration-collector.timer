@@ -1,0 +1,10 @@
+[Unit]
+Description=Run inspiration collector every 4h
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=4h
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

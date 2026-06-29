@@ -1,0 +1,9 @@
+[Unit]
+Description=Inspiration Pipeline processor (transcribe + file)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/drew/inspiration-pipeline
+ExecStart=/home/drew/inspiration-pipeline/.venv/bin/inspiration process
