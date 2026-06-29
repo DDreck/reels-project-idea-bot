@@ -132,7 +132,7 @@ IG_PASSWORD=changeme
 `config.example.toml`:
 ```toml
 collections = ["projects", "looksmax", "3d prints"]
-output_dir = "/home/drew/second-brain-vault/wiki/inspiration"
+output_dir = "/home/youruser/second-brain-vault/wiki/inspiration"
 queue_dir = "./queue"
 db_path = "./inspiration.db"
 ig_session_path = "./session.json"
@@ -144,10 +144,10 @@ max_attempts = 3
 claude_bin = "claude"
 
 [dreck]
-host = "10.0.0.76"
+host = "your-dreck-host"
 user = "drew"
-mac = "60-CF-84-84-1B-D9"
-scratch_dir = "C:/Users/dreww/insp_scratch"
+mac = "AA-BB-CC-DD-EE-FF"
+scratch_dir = "C:/Users/youruser/insp_scratch"
 sleep_cmd = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
 ```
 
@@ -176,9 +176,9 @@ def config_files(tmp_path: Path) -> tuple[Path, Path]:
         "max_attempts = 3\n"
         'claude_bin = "claude"\n'
         "[dreck]\n"
-        'host = "10.0.0.76"\n'
+        'host = "your-dreck-host"\n'
         'user = "drew"\n'
-        'mac = "60-CF-84-84-1B-D9"\n'
+        'mac = "AA-BB-CC-DD-EE-FF"\n'
         'scratch_dir = "C:/scratch"\n'
         'sleep_cmd = "sleepnow"\n',
         encoding="utf-8",
@@ -201,7 +201,7 @@ def test_load_config_reads_toml_and_env(config_files):
     assert cfg.collections == ["projects", "looksmax"]
     assert cfg.batch_size == 50
     assert cfg.keep_originals is False
-    assert cfg.dreck_mac == "60-CF-84-84-1B-D9"
+    assert cfg.dreck_mac == "AA-BB-CC-DD-EE-FF"
     assert cfg.ig_username == "bot"
     assert cfg.ig_password == "pw"
 
@@ -1882,8 +1882,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/drew/inspiration-pipeline
-ExecStart=/home/drew/inspiration-pipeline/.venv/bin/inspiration collect
+WorkingDirectory=/home/youruser/inspiration-pipeline
+ExecStart=/home/youruser/inspiration-pipeline/.venv/bin/inspiration collect
 ```
 
 `deploy/inspiration-collector.timer`:
@@ -1909,8 +1909,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/drew/inspiration-pipeline
-ExecStart=/home/drew/inspiration-pipeline/.venv/bin/inspiration process
+WorkingDirectory=/home/youruser/inspiration-pipeline
+ExecStart=/home/youruser/inspiration-pipeline/.venv/bin/inspiration process
 ```
 
 `deploy/inspiration-processor.timer`:
@@ -1943,7 +1943,7 @@ cp .env.example .env                  # add throwaway IG creds
 # ensure `claude` CLI is installed and logged in (subscription) on pi4
 
 # dreck (one-time): copy the remote script + install GPU deps
-scp remote/transcribe_ocr.py drew@10.0.0.76:C:/Users/dreww/insp_scratch/
+scp remote/transcribe_ocr.py youruser@your-dreck-host:C:/Users/youruser/insp_scratch/
 pip install -r remote/requirements-dreck.txt   # on dreck, with CUDA torch + tesseract
 
 # manual run ("update my reel vault")

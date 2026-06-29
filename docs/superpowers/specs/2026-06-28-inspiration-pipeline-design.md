@@ -1,7 +1,7 @@
 # Inspiration Pipeline — Design
 
 **Date:** 2026-06-28
-**Owner:** drew (jawiend@sandia.gov)
+**Owner:** drew (you@example.com)
 **Status:** Approved design, ready for implementation plan
 
 ## Problem
@@ -44,9 +44,9 @@ and must never leak secrets or personal vault data.
 | Output | Per-reel atomic markdown notes in a configurable output directory |
 | Transcription/OCR | faster-whisper + OCR on dreck's RTX 5090, off-hours (04:00–07:00) |
 | Reasoning/filing | Headless Claude Code (`claude -p`), subscription auth, on pi4 |
-| Collector host | pi4 (10.0.0.10), Syncthing peer of the vault |
+| Collector host | pi4 (your-collector-host), Syncthing peer of the vault |
 | Processor host (Claude) | pi4 |
-| Processor host (GPU) | dreck (10.0.0.76, WoL `60-CF-84-84-1B-D9`) |
+| Processor host (GPU) | dreck (your-dreck-host, WoL `AA-BB-CC-DD-EE-FF`) |
 | Video retention | Delete after filing; optional flag to archive originals to dreck |
 | Manual run | Wakes dreck and transcribes immediately (daytime WoL acceptable) |
 | Backlog import | One-shot mode, processed in bounded batches |
@@ -104,7 +104,7 @@ Reuses the existing `rust_userbot.py` pattern (instagrapi + sqlite seen-set).
 
 Triggered by a 04:00 systemd timer or the manual entrypoint. No-ops if queue empty.
 
-1. **Wake dreck** via Wake-on-LAN (`60-CF-84-84-1B-D9`); poll for SSH readiness.
+1. **Wake dreck** via Wake-on-LAN (`AA-BB-CC-DD-EE-FF`); poll for SSH readiness.
    Reuses rust_raid WoL/SSH lore.
 2. **rsync** queued videos to a scratch dir on dreck.
 3. On dreck's 5090: **faster-whisper** (large model) → transcript per reel;
