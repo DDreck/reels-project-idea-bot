@@ -1,0 +1,18 @@
+collections = ["projects", "looksmax", "3d prints"]
+output_dir = "/home/drew/second-brain-vault/wiki/inspiration"
+queue_dir = "./queue"
+db_path = "./inspiration.db"
+ig_session_path = "./session.json"
+poll_interval_hours = 4.0
+whisper_model = "large-v3"
+batch_size = 50
+keep_originals = false
+max_attempts = 3
+claude_bin = "claude"
+
+[dreck]
+host = "10.0.0.76"
+user = "drew"
+mac = "60-CF-84-84-1B-D9"
+scratch_dir = "C:/Users/dreww/insp_scratch"
+sleep_cmd = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
