@@ -8,7 +8,6 @@ _HEADER = (
     "| category | description |\n| --- | --- |\n"
 )
 _ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$")
-_SKIP = {"category", "--- "}
 
 
 def read_categories(path: Path) -> dict[str, str]:
