@@ -32,14 +32,29 @@ def _now() -> str:
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
+    """Connect to or create the work queue database.
+
+    Args:
+        db_path: Path to the SQLite database file.
+
+    Returns:
+        A configured sqlite3 Connection with Row factory enabled.
+    """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.executescript(_SCHEMA)
-    conn.commit()
     return conn
 
 
 def seen_pks(conn: sqlite3.Connection) -> set[str]:
+    """Get the set of all primary keys currently in the queue.
+
+    Args:
+        conn: Database connection.
+
+    Returns:
+        Set of all pk values in the media table.
+    """
     return {row["pk"] for row in conn.execute("SELECT pk FROM media")}
 
 
@@ -60,7 +75,17 @@ def enqueue(conn: sqlite3.Connection, reel: ReelMeta) -> bool:
         return False
 
 
-def records_by_status(conn: sqlite3.Connection, status: str) -> list[sqlite3.Row]:
+def records_by_status(conn: sqlite3.Connection, status: str
+                      ) -> list[sqlite3.Row]:
+    """Get all records with a given status, ordered by creation time.
+
+    Args:
+        conn: Database connection.
+        status: The status value to filter by.
+
+    Returns:
+        List of media records with matching status.
+    """
     return list(
         conn.execute(
             "SELECT * FROM media WHERE status = ? ORDER BY created_at", (status,)
@@ -68,30 +93,62 @@ def records_by_status(conn: sqlite3.Connection, status: str) -> list[sqlite3.Row
     )
 
 
-def _set(conn: sqlite3.Connection, pk: str, assignments: str, params: tuple) -> None:
+def mark_transcribed(conn: sqlite3.Connection, pk: str) -> None:
+    """Mark a record as transcribed with transcript timestamps.
+
+    Args:
+        conn: Database connection.
+        pk: Primary key of the record to update.
+    """
+    now = _now()
     conn.execute(
-        f"UPDATE media SET {assignments}, updated_at = ? WHERE pk = ?",
-        (*params, _now(), pk),
+        "UPDATE media SET status = 'transcribed', transcribed_at = ?, "
+        "ocr_at = ?, updated_at = ? WHERE pk = ?",
+        (now, now, now, pk),
     )
     conn.commit()
 
 
-def mark_transcribed(conn: sqlite3.Connection, pk: str) -> None:
-    now = _now()
-    _set(conn, pk, "status='transcribed', transcribed_at=?, ocr_at=?", (now, now))
-
-
 def mark_filed(conn: sqlite3.Connection, pk: str) -> None:
-    _set(conn, pk, "status='filed', filed_at=?", (_now(),))
+    """Mark a record as filed.
+
+    Args:
+        conn: Database connection.
+        pk: Primary key of the record to update.
+    """
+    now = _now()
+    conn.execute(
+        "UPDATE media SET status = 'filed', filed_at = ?, updated_at = ? "
+        "WHERE pk = ?",
+        (now, now, pk),
+    )
+    conn.commit()
 
 
 def record_failure(
     conn: sqlite3.Connection, pk: str, error: str, max_attempts: int
 ) -> None:
+    """Record a processing failure and increment attempt counter.
+
+    Args:
+        conn: Database connection.
+        pk: Primary key of the record to update.
+        error: Error message describing the failure.
+        max_attempts: Maximum allowed attempts before marking as failed.
+    """
     row = conn.execute("SELECT attempts FROM media WHERE pk = ?", (pk,)).fetchone()
     attempts = (row["attempts"] if row else 0) + 1
-    status = "failed" if attempts >= max_attempts else None
-    if status:
-        _set(conn, pk, "attempts=?, error=?, status='failed'", (attempts, error))
+    now = _now()
+    if attempts >= max_attempts:
+        conn.execute(
+            "UPDATE media SET attempts = ?, error = ?, status = 'failed', "
+            "updated_at = ? WHERE pk = ?",
+            (attempts, error, now, pk),
+        )
     else:
-        _set(conn, pk, "attempts=?, error=?", (attempts, error))
+        conn.execute(
+            "UPDATE media SET attempts = ?, error = ?, updated_at = ? "
+            "WHERE pk = ?",
+            (attempts, error, now, pk),
+        )
+    conn.commit()
