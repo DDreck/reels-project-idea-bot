@@ -1,5 +1,6 @@
 """Poll Instagram collections, download new reels, enqueue them."""
 import subprocess
+import sys
 from pathlib import Path
 
 from inspiration_pipeline import db
@@ -53,8 +54,8 @@ def _ytdlp_download(url: str, dest_dir: Path, shortcode: str) -> Path:
     dest_dir.mkdir(parents=True, exist_ok=True)
     out = dest_dir / f"{shortcode}.mp4"
     subprocess.run(
-        ["yt-dlp", "-o", str(out), "-f", "mp4", url], check=True,
-        capture_output=True, text=True,
+        [sys.executable, "-m", "yt_dlp", "-o", str(out), "-f", "mp4", url],
+        check=True, capture_output=True, text=True,
     )
     return out
 
