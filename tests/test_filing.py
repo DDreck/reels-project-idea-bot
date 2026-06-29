@@ -25,8 +25,8 @@ def test_file_reel_writes_note_purges_video_marks_filed(tmp_path, dummy_config):
     video.write_bytes(b"x")
     cls = Classification("3d-print", "Hinge", "s", ["p"], "Projects",
                          is_new_category=True, category_description="prints")
-    note_path = filing.file_reel(conn, config, _reel(), "trans", "ocr", video,
-                                 classifier=_classifier(cls))
+    note_path = filing.file_reel(conn, config, _reel(), "trans", "ocr",
+                                 video_path=video, classifier=_classifier(cls))
     assert note_path.exists()
     assert "[[Projects]]" in note_path.read_text(encoding="utf-8")
     assert not video.exists()  # purged
@@ -41,9 +41,11 @@ def test_file_reel_keep_originals(tmp_path, dummy_config):
     config.output_dir.mkdir(parents=True)
     conn = db.connect(config.db_path)
     db.enqueue(conn, _reel())
+    db.mark_transcribed(conn, "1")
     video = tmp_path / "1.mp4"
     video.write_bytes(b"x")
     cls = Classification("workout", "W", "s", [], "Health")
-    filing.file_reel(conn, config, _reel(), "t", "o", video,
+    filing.file_reel(conn, config, _reel(), "t", "o", video_path=video,
                      classifier=_classifier(cls))
     assert video.exists()  # kept
+    assert db.records_by_status(conn, "filed")[0]["pk"] == "1"
