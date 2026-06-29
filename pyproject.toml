@@ -20,5 +20,8 @@ inspiration = "inspiration_pipeline.cli:main"
 requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["inspiration_pipeline"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
