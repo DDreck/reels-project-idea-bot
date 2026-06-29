@@ -1,5 +1,5 @@
 collections = ["projects", "looksmax", "3d prints"]
-output_dir = "/home/drew/second-brain-vault/wiki/inspiration"
+output_dir = "/home/youruser/vault/wiki/inspiration"
 queue_dir = "./queue"
 db_path = "./inspiration.db"
 ig_session_path = "./session.json"
@@ -11,8 +11,8 @@ max_attempts = 3
 claude_bin = "claude"
 
 [dreck]
-host = "10.0.0.76"
-user = "drew"
-mac = "60-CF-84-84-1B-D9"
-scratch_dir = "C:/Users/dreww/insp_scratch"
+host = "your-dreck-host"
+user = "youruser"
+mac = "XX-XX-XX-XX-XX-XX"
+scratch_dir = "C:/Users/youruser/insp_scratch"
 sleep_cmd = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0"

@@ -83,8 +83,8 @@ def run_transcription(config: Config, *, runner=subprocess.run) -> None:
         RuntimeError: If the remote command exits non-zero.
     """
     remote = (
-        f"python {config.dreck_scratch_dir}/transcribe_ocr.py "
-        f"{config.dreck_scratch_dir} --model {config.whisper_model}"
+        f'python "{config.dreck_scratch_dir}/transcribe_ocr.py" '
+        f'"{config.dreck_scratch_dir}" --model "{config.whisper_model}"'
     )
     proc = runner(["ssh", _target(config), remote], capture_output=True, text=True)
     if proc.returncode != 0:

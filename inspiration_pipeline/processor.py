@@ -25,10 +25,12 @@ def process(conn, config: Config, *, dreck_mod=dreck_default,
     if not dreck_mod.wait_for_ssh(config):
         return 0  # leave everything queued; retry next batch
     videos = [config.queue_dir / f"{r['shortcode']}.mp4" for r in rows]
-    dreck_mod.push(config, [v for v in videos if v.exists()])
-    dreck_mod.run_transcription(config)
-    dreck_mod.pull_results(config, config.queue_dir)
-    dreck_mod.sleep_host(config)
+    try:
+        dreck_mod.push(config, [v for v in videos if v.exists()])
+        dreck_mod.run_transcription(config)
+        dreck_mod.pull_results(config, config.queue_dir)
+    finally:
+        dreck_mod.sleep_host(config)
     filed = 0
     for row in rows:
         reel = _reel_from_row(row)

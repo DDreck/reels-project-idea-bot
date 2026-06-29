@@ -36,3 +36,16 @@ def test_record_failure_marks_failed_at_max(tmp_path):
     failed = db.records_by_status(conn, "failed")
     assert len(failed) == 1 and failed[0]["attempts"] == 2
     assert failed[0]["error"] == "boom"
+
+
+def test_record_failure_resets_to_downloaded_before_max(tmp_path):
+    conn = db.connect(tmp_path / "t.db")
+    db.enqueue(conn, _reel("1"))
+    db.mark_transcribed(conn, "1")
+    assert db.records_by_status(conn, "transcribed")[0]["pk"] == "1"
+    db.record_failure(conn, "1", "filing error", max_attempts=2)
+    row = conn.execute("SELECT status, attempts FROM media WHERE pk = '1'").fetchone()
+    assert row["status"] == "downloaded"
+    assert row["attempts"] == 1
+    downloaded = db.records_by_status(conn, "downloaded")
+    assert len(downloaded) == 1 and downloaded[0]["pk"] == "1"

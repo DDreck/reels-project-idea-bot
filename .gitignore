@@ -6,3 +6,4 @@ queue/
 session.json
 .venv/
 *.egg-info/
+config.toml

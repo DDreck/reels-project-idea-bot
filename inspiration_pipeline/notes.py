@@ -25,7 +25,7 @@ def note_filename(reel: ReelMeta) -> str:
 
 def _yaml_tags(cls: Classification) -> str:
     tags = ["inspiration", cls.category]
-    return "[" + ", ".join(tags) + "]"
+    return "[" + ", ".join(f'"{t}"' for t in tags) + "]"
 
 
 def render_note(

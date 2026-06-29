@@ -147,8 +147,8 @@ def record_failure(
         )
     else:
         conn.execute(
-            "UPDATE media SET attempts = ?, error = ?, updated_at = ? "
-            "WHERE pk = ?",
+            "UPDATE media SET attempts = ?, error = ?, status = 'downloaded', "
+            "updated_at = ? WHERE pk = ?",
             (attempts, error, now, pk),
         )
     conn.commit()
