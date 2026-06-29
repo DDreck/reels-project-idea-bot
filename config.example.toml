@@ -15,3 +15,6 @@ user = "youruser"
 mac = "XX-XX-XX-XX-XX-XX"
 scratch_dir = "C:/Users/youruser/insp_scratch"
 sleep_cmd = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
+# Python on dreck that has faster-whisper/opencv/pytesseract installed
+# (e.g. a dedicated venv); defaults to "python" if omitted.
+python = "C:/Users/youruser/insp_scratch/venv/Scripts/python.exe"

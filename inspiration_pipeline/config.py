@@ -26,6 +26,7 @@ class Config:
     dreck_mac: str
     dreck_scratch_dir: str
     dreck_sleep_cmd: str
+    dreck_python: str
     claude_bin: str
     ig_username: str
     ig_password: str
@@ -71,6 +72,7 @@ def load_config(config_path: Path, env_path: Path | None = None) -> Config:
         dreck_mac=str(dreck["mac"]),
         dreck_scratch_dir=str(dreck["scratch_dir"]),
         dreck_sleep_cmd=str(dreck["sleep_cmd"]),
+        dreck_python=str(dreck.get("python", "python")),
         claude_bin=str(raw["claude_bin"]),
         ig_username=_require(env, "IG_USERNAME"),
         ig_password=_require(env, "IG_PASSWORD"),

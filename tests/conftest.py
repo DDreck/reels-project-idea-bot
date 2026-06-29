@@ -24,7 +24,8 @@ def config_files(tmp_path: Path) -> tuple[Path, Path]:
         'user = "youruser"\n'
         'mac = "AA-BB-CC-DD-EE-FF"\n'
         'scratch_dir = "C:/scratch"\n'
-        'sleep_cmd = "sleepnow"\n',
+        'sleep_cmd = "sleepnow"\n'
+        'python = "python"\n',
         encoding="utf-8",
     )
     env = tmp_path / ".env"
@@ -40,6 +41,7 @@ def dummy_config(tmp_path) -> Config:
         whisper_model="large-v3", batch_size=50,
         keep_originals=False, max_attempts=3, dreck_host="h", dreck_user="u",
         dreck_mac="m", dreck_scratch_dir="C:/s", dreck_sleep_cmd="s",
+        dreck_python="python",
         claude_bin="claude", ig_username="bot", ig_password="pw",
         ig_session_path=tmp_path / "session.json",
     )
