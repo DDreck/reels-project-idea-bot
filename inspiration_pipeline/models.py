@@ -12,6 +12,9 @@ class ReelMeta:
     taken_at: str  # ISO date, e.g. "2026-06-25"
     collection: str
 
+    def title_or_caption(self) -> str:
+        return (self.caption.strip().splitlines() or ["reel"])[0][:60] or "reel"
+
 
 @dataclass(frozen=True)
 class Classification:
