@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 
+from inspiration_pipeline.config import Config
+
 
 @pytest.fixture
 def config_files(tmp_path: Path) -> tuple[Path, Path]:
@@ -29,3 +31,16 @@ def config_files(tmp_path: Path) -> tuple[Path, Path]:
     env = tmp_path / ".env"
     env.write_text("IG_USERNAME=bot\nIG_PASSWORD=pw\n", encoding="utf-8")
     return cfg, env
+
+
+@pytest.fixture
+def dummy_config(tmp_path) -> Config:
+    return Config(
+        collections=["projects"], output_dir=tmp_path / "out",
+        queue_dir=tmp_path / "q", db_path=tmp_path / "db.db",
+        poll_interval_hours=4.0, whisper_model="large-v3", batch_size=50,
+        keep_originals=False, max_attempts=3, dreck_host="h", dreck_user="u",
+        dreck_mac="m", dreck_scratch_dir="C:/s", dreck_sleep_cmd="s",
+        claude_bin="claude", ig_username="bot", ig_password="pw",
+        ig_session_path=tmp_path / "session.json",
+    )
