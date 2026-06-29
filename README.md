@@ -72,6 +72,7 @@ cp .env.example .env
 
 ```bash
 # From pi4, copy the remote script to dreck's scratch directory
+# Replace drew@10.0.0.76 and the destination path with your own SSH host and scratch directory.
 scp remote/transcribe_ocr.py drew@10.0.0.76:C:/Users/dreww/insp_scratch/
 
 # On dreck, install GPU dependencies (with CUDA-enabled torch and tesseract)

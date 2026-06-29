@@ -1,6 +1,8 @@
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from inspiration_pipeline import dreck
 
 
@@ -40,3 +42,21 @@ def test_sleep_host_runs_sleep_cmd(dummy_config):
     calls = []
     dreck.sleep_host(dummy_config, runner=lambda cmd, **kw: calls.append(cmd) or _ok(cmd))
     assert dummy_config.dreck_sleep_cmd in " ".join(calls[0])
+
+
+def test_run_transcription_raises_on_failure(dummy_config):
+    def runner(cmd, **kw):
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="fail")
+    with pytest.raises(RuntimeError):
+        dreck.run_transcription(dummy_config, runner=runner)
+
+
+def test_pull_results_builds_scp_glob(dummy_config, tmp_path):
+    calls = []
+    dreck.pull_results(
+        dummy_config, tmp_path,
+        runner=lambda cmd, **kw: calls.append(cmd) or _ok(cmd),
+    )
+    assert calls[0][0] == "scp"
+    assert "*.json" in calls[0][1]
+    assert str(tmp_path) == calls[0][2]

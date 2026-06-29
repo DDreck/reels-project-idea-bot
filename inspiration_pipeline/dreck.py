@@ -17,11 +17,29 @@ def _target(config: Config) -> str:
 
 
 def wake(config: Config, *, sender=_default_sender) -> None:
+    """Send a Wake-on-LAN magic packet to the dreck host.
+
+    Args:
+        config: Configuration with dreck_mac.
+        sender: Callable that sends the magic packet (test seam).
+    """
     sender(config.dreck_mac)
 
 
 def wait_for_ssh(config: Config, *, timeout: int = 180, interval: int = 5,
                  runner=subprocess.run, sleep=time.sleep) -> bool:
+    """Poll SSH until the dreck host responds or the timeout expires.
+
+    Args:
+        config: Configuration with dreck host/user.
+        timeout: Maximum seconds to wait before giving up.
+        interval: Seconds between probe attempts.
+        runner: Subprocess runner (test seam).
+        sleep: Sleep callable (test seam).
+
+    Returns:
+        True if SSH became reachable, False if timeout expired.
+    """
     deadline = time.monotonic() + timeout
     while True:
         proc = runner(
@@ -37,6 +55,16 @@ def wait_for_ssh(config: Config, *, timeout: int = 180, interval: int = 5,
 
 
 def push(config: Config, local_files: list[Path], *, runner=subprocess.run) -> None:
+    """Copy local files to the dreck scratch directory via scp.
+
+    Args:
+        config: Configuration with dreck host/user/scratch_dir.
+        local_files: Paths to copy.
+        runner: Subprocess runner (test seam).
+
+    Raises:
+        RuntimeError: If any scp transfer exits non-zero.
+    """
     dest = f"{_target(config)}:{config.dreck_scratch_dir}/"
     for path in local_files:
         proc = runner(["scp", str(path), dest], capture_output=True, text=True)
@@ -45,6 +73,15 @@ def push(config: Config, local_files: list[Path], *, runner=subprocess.run) -> N
 
 
 def run_transcription(config: Config, *, runner=subprocess.run) -> None:
+    """Run transcribe_ocr.py on the dreck host over SSH.
+
+    Args:
+        config: Configuration with dreck host/user/scratch_dir/whisper_model.
+        runner: Subprocess runner (test seam).
+
+    Raises:
+        RuntimeError: If the remote command exits non-zero.
+    """
     remote = (
         f"python {config.dreck_scratch_dir}/transcribe_ocr.py "
         f"{config.dreck_scratch_dir} --model {config.whisper_model}"
@@ -55,6 +92,16 @@ def run_transcription(config: Config, *, runner=subprocess.run) -> None:
 
 
 def pull_results(config: Config, local_dir: Path, *, runner=subprocess.run) -> None:
+    """Download JSON results from dreck's scratch dir to local_dir via scp.
+
+    Args:
+        config: Configuration with dreck host/user/scratch_dir.
+        local_dir: Local directory to receive the JSON files.
+        runner: Subprocess runner (test seam).
+
+    Raises:
+        RuntimeError: If scp exits non-zero.
+    """
     local_dir.mkdir(parents=True, exist_ok=True)
     src = f"{_target(config)}:{config.dreck_scratch_dir}/*.json"
     proc = runner(["scp", src, str(local_dir)], capture_output=True, text=True)
@@ -63,5 +110,11 @@ def pull_results(config: Config, local_dir: Path, *, runner=subprocess.run) -> N
 
 
 def sleep_host(config: Config, *, runner=subprocess.run) -> None:
+    """Send the sleep command to the dreck host over SSH.
+
+    Args:
+        config: Configuration with dreck host/user/sleep_cmd.
+        runner: Subprocess runner (test seam).
+    """
     runner(["ssh", _target(config), config.dreck_sleep_cmd],
            capture_output=True, text=True)

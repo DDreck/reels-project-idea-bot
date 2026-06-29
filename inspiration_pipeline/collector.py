@@ -17,6 +17,7 @@ class InstagramSource:
         self._client = Client()
 
     def login(self) -> None:
+        """Authenticate with Instagram, loading and saving the session file."""
         cfg = self._config
         if cfg.ig_session_path.exists():
             self._client.load_settings(cfg.ig_session_path)
@@ -24,6 +25,14 @@ class InstagramSource:
         self._client.dump_settings(cfg.ig_session_path)
 
     def collection_medias(self, name: str) -> list[ReelMeta]:
+        """Return ReelMeta for every media in the named collection.
+
+        Args:
+            name: The Instagram collection name to fetch.
+
+        Returns:
+            List of ReelMeta, or an empty list if the collection is not found.
+        """
         collections = self._client.collections()
         match = next((c for c in collections if c.name == name), None)
         if match is None:
@@ -53,6 +62,17 @@ def _ytdlp_download(url: str, dest_dir: Path, shortcode: str) -> Path:
 def download_reel(
     url: str, dest_dir: Path, shortcode: str, *, downloader=_ytdlp_download
 ) -> Path:
+    """Download a reel video to dest_dir using yt-dlp.
+
+    Args:
+        url: Direct URL of the reel.
+        dest_dir: Directory to write the downloaded file.
+        shortcode: Reel shortcode used as the output filename stem.
+        downloader: Callable matching ``_ytdlp_download`` signature (test seam).
+
+    Returns:
+        Path to the downloaded mp4 file.
+    """
     return downloader(url, dest_dir, shortcode)
 
 

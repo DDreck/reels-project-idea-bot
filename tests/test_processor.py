@@ -14,20 +14,23 @@ class FakeDreck:
     def __init__(self, scratch: Path, reachable=True):
         self.scratch = scratch
         self.reachable = reachable
+        self.calls: list[str] = []
 
     def wake(self, config):  # noqa: D401
-        pass
+        self.calls.append("wake")
 
     def wait_for_ssh(self, config):
+        self.calls.append("wait_for_ssh")
         return self.reachable
 
     def push(self, config, files):
-        pass
+        self.calls.append("push")
 
     def run_transcription(self, config):
-        pass
+        self.calls.append("run_transcription")
 
     def pull_results(self, config, local_dir):
+        self.calls.append("pull_results")
         # simulate dreck returning <stem>.json for each queued video
         for video in Path(config.queue_dir).glob("*.mp4"):
             (local_dir / f"{video.stem}.json").write_text(
@@ -35,7 +38,7 @@ class FakeDreck:
             )
 
     def sleep_host(self, config):
-        pass
+        self.calls.append("sleep_host")
 
 
 def _seed(config):
@@ -62,7 +65,9 @@ def test_process_files_all_reels(tmp_path, dummy_config):
 def test_process_empty_queue_noop(tmp_path, dummy_config):
     object.__setattr__(dummy_config, "queue_dir", tmp_path / "q")
     conn = db.connect(dummy_config.db_path)
-    assert processor.process(conn, dummy_config, dreck_mod=FakeDreck(tmp_path)) == 0
+    fake = FakeDreck(tmp_path)
+    assert processor.process(conn, dummy_config, dreck_mod=fake) == 0
+    assert fake.calls == []
 
 
 def test_process_dreck_unreachable_leaves_queued(tmp_path, dummy_config):

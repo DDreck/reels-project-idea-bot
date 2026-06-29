@@ -13,6 +13,7 @@ class ReelMeta:
     collection: str
 
     def title_or_caption(self) -> str:
+        """Return the first caption line (up to 60 chars), or ``'reel'`` if empty."""
         return (self.caption.strip().splitlines() or ["reel"])[0][:60] or "reel"
 
 
@@ -28,6 +29,14 @@ class Classification:
 
     @classmethod
     def from_json(cls, data: dict) -> "Classification":
+        """Construct a Classification from a parsed JSON dict.
+
+        Args:
+            data: Dict with keys matching Classification fields.
+
+        Returns:
+            A new Classification instance.
+        """
         return cls(
             category=str(data["category"]),
             title=str(data["title"]),

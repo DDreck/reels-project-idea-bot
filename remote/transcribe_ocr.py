@@ -6,6 +6,14 @@ from pathlib import Path
 
 
 def dedup_lines(lines: list[str]) -> str:
+    """Join non-empty lines, removing duplicates while preserving order.
+
+    Args:
+        lines: Raw text lines, possibly repeated or blank.
+
+    Returns:
+        Newline-joined string with unique, non-blank lines.
+    """
     seen: set[str] = set()
     kept: list[str] = []
     for line in lines:
@@ -38,21 +46,33 @@ def _frame_ocr(fps: float = 1.0):
         step = max(int(native / fps), 1)
         lines: list[str] = []
         idx = 0
-        while True:
-            ok, frame = cap.read()
-            if not ok:
-                break
-            if idx % step == 0:
-                text = pytesseract.image_to_string(frame)
-                lines.extend(text.splitlines())
-            idx += 1
-        cap.release()
+        try:
+            while True:
+                ok, frame = cap.read()
+                if not ok:
+                    break
+                if idx % step == 0:
+                    text = pytesseract.image_to_string(frame)
+                    lines.extend(text.splitlines())
+                idx += 1
+        finally:
+            cap.release()
         return lines
 
     return ocr
 
 
 def process_video(path: Path, transcriber, ocr_fn) -> dict:
+    """Transcribe and OCR a single video file.
+
+    Args:
+        path: Path to the mp4 video.
+        transcriber: Callable ``(path) -> str`` for speech-to-text.
+        ocr_fn: Callable ``(path) -> list[str]`` for frame OCR.
+
+    Returns:
+        Dict with keys ``transcript`` (str) and ``ocr`` (str).
+    """
     return {"transcript": transcriber(path), "ocr": dedup_lines(ocr_fn(path))}
 
 

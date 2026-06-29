@@ -38,3 +38,10 @@ def test_classify_reel_nonzero_exit_raises(dummy_config):
 def test_build_prompt_lists_known_categories():
     prompt = cc.build_prompt(_reel(), "trans", "ocr", {"workout": "exercise"})
     assert "workout" in prompt and "exercise" in prompt and "trans" in prompt
+
+
+def test_classify_reel_malformed_output_raises(dummy_config):
+    def runner(cmd, **kwargs):
+        return subprocess.CompletedProcess(cmd, 0, stdout="not json", stderr="")
+    with pytest.raises(cc.ClaudeError):
+        cc.classify_reel(dummy_config, _reel(), "t", "o", {}, runner=runner)
