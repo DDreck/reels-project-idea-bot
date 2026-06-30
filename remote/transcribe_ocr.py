@@ -161,13 +161,16 @@ def main(argv: list[str]) -> int:
     ocr_fn = _frame_ocr()
     scratch = Path(args.scratch_dir)
     for video in scratch.glob("*.mp4"):
-        result = process_video(
-            video, transcriber, ocr_fn, lambda p: _keyframes(p, args.frames)
-        )
-        (scratch / f"{video.stem}.json").write_text(
-            json.dumps(result), encoding="utf-8"
-        )
-        video.unlink()
+        try:
+            result = process_video(
+                video, transcriber, ocr_fn, lambda p: _keyframes(p, args.frames)
+            )
+            (scratch / f"{video.stem}.json").write_text(
+                json.dumps(result), encoding="utf-8"
+            )
+            video.unlink()
+        except Exception as exc:  # noqa: BLE001 - one bad video must not abort
+            print(f"skip {video.name}: {exc}", file=sys.stderr)
     return 0
 
 
