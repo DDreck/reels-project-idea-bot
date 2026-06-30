@@ -8,3 +8,4 @@ session.json
 *.egg-info/
 config.toml
 .superpowers/
+ig_cookies.txt
