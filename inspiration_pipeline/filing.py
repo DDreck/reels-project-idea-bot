@@ -44,6 +44,7 @@ def file_reel(
     *,
     video_path: Path,
     keyframes=(),
+    segments=(),
     classifier=claude_client.classify_reel,
 ) -> Path:
     """Turn a transcribed reel into a filed vault note. Returns the note path."""
@@ -62,7 +63,7 @@ def file_reel(
             video_path.unlink()
     note = notes.render_note(
         reel, transcript, ocr, cls, date.today().isoformat(),
-        keyframes=frames, video=video_name,
+        keyframes=frames, video=video_name, segments=segments,
     )
     note_path = config.output_dir / notes.note_filename(reel)
     note_path.write_text(note, encoding="utf-8")

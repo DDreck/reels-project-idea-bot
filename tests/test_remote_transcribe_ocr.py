@@ -15,13 +15,16 @@ def test_dedup_lines_preserves_order_drops_repeats():
 def test_process_video_combines_transcript_ocr_and_keyframes(tmp_path):
     video = tmp_path / "clip.mp4"
     video.write_bytes(b"x")
+    segs = [{"start": 0.0, "end": 1.5, "text": "spoken"},
+            {"start": 1.5, "end": 3.0, "text": "text"}]
     result = tx.process_video(
-        video, transcriber=lambda p: "spoken text",
+        video, transcriber=lambda p: segs,
         ocr_fn=lambda p: ["LINE ONE", "LINE ONE", "LINE TWO"],
         keyframe_fn=lambda p: [tmp_path / "clip_f0.jpg", tmp_path / "clip_f1.jpg"],
     )
     assert result == {
         "transcript": "spoken text",
+        "segments": segs,
         "ocr": "LINE ONE\nLINE TWO",
         "keyframes": ["clip_f0.jpg", "clip_f1.jpg"],
     }

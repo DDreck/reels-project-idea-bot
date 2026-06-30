@@ -25,6 +25,15 @@ def test_render_note_contains_frontmatter_and_sections():
     assert "## On-screen text\nON SCREEN" in note
 
 
+def test_render_note_timestamped_transcript_from_segments():
+    segs = [{"start": 0.0, "end": 3.0, "text": "grip the bar"},
+            {"start": 75.5, "end": 80.0, "text": "then pull"}]
+    note = render_note(_reel(), "grip the bar then pull", "o", _cls(),
+                       "2026-06-28", segments=segs)
+    assert "[0:00] grip the bar" in note
+    assert "[1:15] then pull" in note  # 75s -> 1:15
+
+
 def test_render_note_health_crosslink():
     note = render_note(_reel(), "t", "o", _cls(domain="Health"), "2026-06-28")
     assert "[[Health]]" in note

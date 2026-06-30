@@ -28,9 +28,23 @@ def _yaml_tags(cls: Classification) -> str:
     return "[" + ", ".join(f'"{t}"' for t in tags) + "]"
 
 
+def _mmss(seconds: float) -> str:
+    total = int(seconds)
+    return f"{total // 60}:{total % 60:02d}"
+
+
+def _transcript_block(transcript: str, segments) -> str:
+    """Timestamped transcript when segments exist, else the plain text."""
+    if not segments:
+        return transcript
+    return "\n".join(
+        f"[{_mmss(s['start'])}] {s['text']}" for s in segments if s.get("text")
+    )
+
+
 def render_note(
     reel: ReelMeta, transcript: str, ocr: str, cls: Classification,
-    filed_date: str, *, keyframes=(), video=None,
+    filed_date: str, *, keyframes=(), video=None, segments=(),
 ) -> str:
     """Render a reel into a Markdown vault note.
 
@@ -42,6 +56,8 @@ def render_note(
         filed_date: ISO date the note was filed.
         keyframes: Image filenames (in the vault) to embed for reference.
         video: Saved video filename (in the vault) to embed, or None.
+        segments: Timestamped transcript segments ``{start, end, text}``; when
+            present the transcript is rendered with ``[m:ss]`` markers.
 
     Returns:
         A Markdown string with YAML front-matter ready to write to disk.
@@ -73,6 +89,6 @@ def render_note(
         f"{crosslink_block}"
         f"{video_block}"
         f"{frames_block}\n"
-        f"## Transcript\n{transcript}\n\n"
+        f"## Transcript\n{_transcript_block(transcript, segments)}\n\n"
         f"## On-screen text\n{ocr}\n"
     )

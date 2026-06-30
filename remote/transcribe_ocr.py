@@ -59,7 +59,7 @@ def _whisper_transcribe(model_name: str):
 
     model = WhisperModel(model_name, device="cuda", compute_type="float16")
 
-    def transcribe(path: Path) -> str:
+    def transcribe(path: Path) -> list[dict]:
         # vad_filter drops music/silence segments (the main source of
         # hallucinated text on reels); beam search + no prev-text conditioning
         # improve accuracy and avoid repetition loops over backing tracks.
@@ -67,7 +67,11 @@ def _whisper_transcribe(model_name: str):
             str(path), beam_size=5, vad_filter=True,
             condition_on_previous_text=False,
         )
-        return " ".join(seg.text.strip() for seg in segments).strip()
+        return [
+            {"start": round(s.start, 2), "end": round(s.end, 2),
+             "text": s.text.strip()}
+            for s in segments
+        ]
 
     return transcribe
 
@@ -135,17 +139,21 @@ def process_video(path: Path, transcriber, ocr_fn, keyframe_fn) -> dict:
 
     Args:
         path: Path to the mp4 video.
-        transcriber: Callable ``(path) -> str`` for speech-to-text.
+        transcriber: Callable ``(path) -> list[dict]`` returning timestamped
+            segments ``{start, end, text}``.
         ocr_fn: Callable ``(path) -> list[str]`` for frame OCR.
         keyframe_fn: Callable ``(path) -> list[Path]`` saving keyframe images.
 
     Returns:
-        Dict with keys ``transcript`` (str), ``ocr`` (str), and ``keyframes``
-        (list of saved image filenames).
+        Dict with keys ``transcript`` (str), ``segments`` (timestamped list),
+        ``ocr`` (str), and ``keyframes`` (list of saved image filenames).
     """
+    segments = transcriber(path)
+    transcript = " ".join(s["text"] for s in segments).strip()
     frames = [p.name for p in keyframe_fn(path)]
     return {
-        "transcript": transcriber(path),
+        "transcript": transcript,
+        "segments": segments,
         "ocr": dedup_lines(ocr_fn(path)),
         "keyframes": frames,
     }
