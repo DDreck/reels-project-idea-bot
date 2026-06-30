@@ -50,18 +50,23 @@ class InstagramSource:
         ]
 
 
-def _ytdlp_download(url: str, dest_dir: Path, shortcode: str) -> Path:
+def _ytdlp_download(
+    url: str, dest_dir: Path, shortcode: str, cookies_path: Path | None = None
+) -> Path:
     dest_dir.mkdir(parents=True, exist_ok=True)
     out = dest_dir / f"{shortcode}.mp4"
-    subprocess.run(
-        [sys.executable, "-m", "yt_dlp", "-o", str(out), "-f", "mp4", url],
-        check=True, capture_output=True, text=True,
-    )
+    cmd = [sys.executable, "-m", "yt_dlp", "-o", str(out),
+           "-f", "best[ext=mp4]/best"]
+    if cookies_path is not None and Path(cookies_path).exists():
+        cmd += ["--cookies", str(cookies_path)]
+    cmd.append(url)
+    subprocess.run(cmd, check=True, capture_output=True, text=True)
     return out
 
 
 def download_reel(
-    url: str, dest_dir: Path, shortcode: str, *, downloader=_ytdlp_download
+    url: str, dest_dir: Path, shortcode: str, *, cookies_path: Path | None = None,
+    downloader=_ytdlp_download,
 ) -> Path:
     """Download a reel video to dest_dir using yt-dlp.
 
@@ -69,12 +74,13 @@ def download_reel(
         url: Direct URL of the reel.
         dest_dir: Directory to write the downloaded file.
         shortcode: Reel shortcode used as the output filename stem.
+        cookies_path: Optional Netscape cookies file for Instagram auth.
         downloader: Callable matching ``_ytdlp_download`` signature (test seam).
 
     Returns:
         Path to the downloaded mp4 file.
     """
-    return downloader(url, dest_dir, shortcode)
+    return downloader(url, dest_dir, shortcode, cookies_path=cookies_path)
 
 
 def collect(conn, config: Config, source, *, backlog: bool = False,
@@ -85,13 +91,14 @@ def collect(conn, config: Config, source, *, backlog: bool = False,
     incremental and full passes idempotent.
     """
     seen = db.seen_pks(conn)
+    cookies_path = config.ig_session_path.parent / "ig_cookies.txt"
     enqueued = 0
     for name in config.collections:
         for reel in source.collection_medias(name):
             if reel.pk in seen:
                 continue
             download_reel(reel.url, config.queue_dir, reel.shortcode,
-                          downloader=downloader)
+                          cookies_path=cookies_path, downloader=downloader)
             if db.enqueue(conn, reel):
                 enqueued += 1
                 seen.add(reel.pk)
