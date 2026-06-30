@@ -37,3 +37,23 @@ def test_collect_enqueues_new_and_skips_seen(tmp_path, dummy_config):
     assert n == 1  # only pk 2
     assert calls == ["sc2"]
     assert db.seen_pks(conn) == {"1", "2"}
+
+
+def test_collect_skips_failed_download_and_continues(tmp_path, dummy_config):
+    config = dummy_config
+    object.__setattr__(config, "collections", ["projects"])
+    object.__setattr__(config, "queue_dir", tmp_path / "q")
+    conn = db.connect(config.db_path)
+    source = FakeSource({"projects": [_reel("1"), _reel("2")]})
+
+    def flaky_dl(url, dest_dir, shortcode, **kw):
+        if shortcode == "sc1":
+            raise RuntimeError("rate limited")
+        p = Path(dest_dir) / f"{shortcode}.mp4"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(b"x")
+        return p
+
+    n = collector.collect(conn, config, source, downloader=flaky_dl)
+    assert n == 1  # pk 1 skipped, pk 2 still enqueued
+    assert db.seen_pks(conn) == {"2"}  # failed reel not marked seen (retried later)

@@ -1,4 +1,5 @@
 """Poll Instagram collections, download new reels, enqueue them."""
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -6,6 +7,8 @@ from pathlib import Path
 from inspiration_pipeline import db
 from inspiration_pipeline.config import Config
 from inspiration_pipeline.models import ReelMeta
+
+_log = logging.getLogger(__name__)
 
 
 class InstagramSource:
@@ -97,8 +100,12 @@ def collect(conn, config: Config, source, *, backlog: bool = False,
         for reel in source.collection_medias(name):
             if reel.pk in seen:
                 continue
-            download_reel(reel.url, config.queue_dir, reel.shortcode,
-                          cookies_path=cookies_path, downloader=downloader)
+            try:
+                download_reel(reel.url, config.queue_dir, reel.shortcode,
+                              cookies_path=cookies_path, downloader=downloader)
+            except Exception as exc:  # noqa: BLE001 - one bad reel must not abort
+                _log.warning("skipping %s (%s): %s", reel.shortcode, name, exc)
+                continue
             if db.enqueue(conn, reel):
                 enqueued += 1
                 seen.add(reel.pk)
