@@ -38,7 +38,7 @@ class InstagramSource:
         match = next((c for c in collections if c.name == name), None)
         if match is None:
             return []
-        medias = self._client.collection_medias(match.id)
+        medias = self._client.collection_medias(match.id, amount=0)
         return [
             ReelMeta(
                 pk=str(m.pk), shortcode=m.code,
