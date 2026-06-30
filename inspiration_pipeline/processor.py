@@ -40,7 +40,8 @@ def process(conn, config: Config, *, dreck_mod=dreck_default,
             db.mark_transcribed(conn, reel.pk)
             kwargs = {"classifier": classifier} if classifier else {}
             file_fn(conn, config, reel, result["transcript"], result["ocr"],
-                    video_path=config.queue_dir / f"{reel.shortcode}.mp4", **kwargs)
+                    video_path=config.queue_dir / f"{reel.shortcode}.mp4",
+                    keyframes=result.get("keyframes", []), **kwargs)
             filed += 1
         except Exception as exc:  # noqa: BLE001 - per-reel isolation
             db.record_failure(conn, reel.pk, str(exc), config.max_attempts)

@@ -29,7 +29,8 @@ def _yaml_tags(cls: Classification) -> str:
 
 
 def render_note(
-    reel: ReelMeta, transcript: str, ocr: str, cls: Classification, filed_date: str
+    reel: ReelMeta, transcript: str, ocr: str, cls: Classification,
+    filed_date: str, *, keyframes=(),
 ) -> str:
     """Render a reel into a Markdown vault note.
 
@@ -39,6 +40,7 @@ def render_note(
         ocr: On-screen text extracted from the reel.
         cls: Classification produced by Claude.
         filed_date: ISO date the note was filed.
+        keyframes: Image filenames (in the vault) to embed for reference.
 
     Returns:
         A Markdown string with YAML front-matter ready to write to disk.
@@ -46,6 +48,10 @@ def render_note(
     crosslink = _CROSSLINK.get(cls.domain, "")
     points = "\n".join(f"- {p}" for p in cls.key_points)
     crosslink_block = f"\n> Cross-linked to {crosslink}\n" if crosslink else "\n"
+    frames_block = ""
+    if keyframes:
+        embeds = "\n".join(f"![[{name}]]" for name in keyframes)
+        frames_block = f"\n## Frames\n{embeds}\n"
     return (
         "---\n"
         "type: source\n"
@@ -62,7 +68,8 @@ def render_note(
         f"# {cls.title}\n\n"
         f"**Summary:** {cls.summary}\n\n"
         f"**Key points:**\n{points}\n"
-        f"{crosslink_block}\n"
+        f"{crosslink_block}"
+        f"{frames_block}\n"
         f"## Transcript\n{transcript}\n\n"
         f"## On-screen text\n{ocr}\n"
     )

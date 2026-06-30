@@ -1,4 +1,4 @@
-"""Runs ON dreck (RTX 5090). Transcribe + OCR each mp4 in a dir to <stem>.json."""
+"""Runs ON dreck (RTX 5090). Transcribe + OCR + keyframe each mp4 to <stem>.json."""
 import argparse
 import json
 import sys
@@ -30,7 +30,13 @@ def _whisper_transcribe(model_name: str):
     model = WhisperModel(model_name, device="cuda", compute_type="float16")
 
     def transcribe(path: Path) -> str:
-        segments, _ = model.transcribe(str(path))
+        # vad_filter drops music/silence segments (the main source of
+        # hallucinated text on reels); beam search + no prev-text conditioning
+        # improve accuracy and avoid repetition loops over backing tracks.
+        segments, _ = model.transcribe(
+            str(path), beam_size=5, vad_filter=True,
+            condition_on_previous_text=False,
+        )
         return " ".join(seg.text.strip() for seg in segments).strip()
 
     return transcribe
@@ -62,30 +68,72 @@ def _frame_ocr(fps: float = 1.0):
     return ocr
 
 
-def process_video(path: Path, transcriber, ocr_fn) -> dict:
-    """Transcribe and OCR a single video file.
+def _keyframes(path: Path, count: int = 4) -> list[Path]:
+    """Save ``count`` evenly-spaced JPEG keyframes next to the video.
+
+    Args:
+        path: Path to the mp4 video.
+        count: Number of frames to extract (spread across the clip).
+
+    Returns:
+        Paths of the saved ``<stem>_f{i}.jpg`` files.
+    """
+    import cv2
+
+    cap = cv2.VideoCapture(str(path))
+    saved: list[Path] = []
+    try:
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+        if total <= 0:
+            return saved
+        positions = [int(total * (i + 1) / (count + 1)) for i in range(count)]
+        for i, pos in enumerate(positions):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, pos)
+            ok, frame = cap.read()
+            if not ok:
+                continue
+            out = path.parent / f"{path.stem}_f{i}.jpg"
+            cv2.imwrite(str(out), frame)
+            saved.append(out)
+    finally:
+        cap.release()
+    return saved
+
+
+def process_video(path: Path, transcriber, ocr_fn, keyframe_fn) -> dict:
+    """Transcribe, OCR, and extract keyframes for a single video.
 
     Args:
         path: Path to the mp4 video.
         transcriber: Callable ``(path) -> str`` for speech-to-text.
         ocr_fn: Callable ``(path) -> list[str]`` for frame OCR.
+        keyframe_fn: Callable ``(path) -> list[Path]`` saving keyframe images.
 
     Returns:
-        Dict with keys ``transcript`` (str) and ``ocr`` (str).
+        Dict with keys ``transcript`` (str), ``ocr`` (str), and ``keyframes``
+        (list of saved image filenames).
     """
-    return {"transcript": transcriber(path), "ocr": dedup_lines(ocr_fn(path))}
+    frames = [p.name for p in keyframe_fn(path)]
+    return {
+        "transcript": transcriber(path),
+        "ocr": dedup_lines(ocr_fn(path)),
+        "keyframes": frames,
+    }
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("scratch_dir")
     parser.add_argument("--model", default="large-v3")
+    parser.add_argument("--frames", type=int, default=4)
     args = parser.parse_args(argv)
     transcriber = _whisper_transcribe(args.model)
     ocr_fn = _frame_ocr()
     scratch = Path(args.scratch_dir)
     for video in scratch.glob("*.mp4"):
-        result = process_video(video, transcriber, ocr_fn)
+        result = process_video(
+            video, transcriber, ocr_fn, lambda p: _keyframes(p, args.frames)
+        )
         (scratch / f"{video.stem}.json").write_text(
             json.dumps(result), encoding="utf-8"
         )

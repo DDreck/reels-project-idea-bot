@@ -107,6 +107,10 @@ def pull_results(config: Config, local_dir: Path, *, runner=subprocess.run) -> N
     proc = runner(["scp", src, str(local_dir)], capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(f"scp pull failed: {proc.stderr}")
+    # Keyframe images are best-effort: a reel may have none, and scp exits
+    # non-zero when the glob matches nothing -- don't fail the batch over it.
+    frames = f"{_target(config)}:{config.dreck_scratch_dir}/*.jpg"
+    runner(["scp", frames, str(local_dir)], capture_output=True, text=True)
 
 
 def sleep_host(config: Config, *, runner=subprocess.run) -> None:
@@ -129,5 +133,5 @@ def clear_scratch(config: Config, *, runner=subprocess.run) -> None:
             (del on an empty dir is benign).
     """
     scratch = config.dreck_scratch_dir.replace("/", "\\")
-    cmd = f'del /q "{scratch}\\*.json" "{scratch}\\*.mp4"'
+    cmd = f'del /q "{scratch}\\*.json" "{scratch}\\*.mp4" "{scratch}\\*.jpg"'
     runner(["ssh", _target(config), cmd], capture_output=True, text=True)
