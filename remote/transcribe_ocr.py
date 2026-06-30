@@ -24,7 +24,37 @@ def dedup_lines(lines: list[str]) -> str:
     return "\n".join(kept)
 
 
+def _ensure_cuda_dlls() -> None:
+    """On Windows, add the pip nvidia cuBLAS/cuDNN bin dirs to the DLL path.
+
+    ctranslate2 (faster-whisper's backend) needs cublas64_12.dll / cudnn at
+    runtime; the Windows wheels don't bundle them, so they come from the
+    ``nvidia-cublas-cu12`` / ``nvidia-cudnn-cu12`` packages. No-op elsewhere.
+    """
+    import importlib.util
+    import os
+    import sys
+
+    if not sys.platform.startswith("win"):
+        return
+    for pkg in ("nvidia.cublas", "nvidia.cudnn"):
+        try:
+            spec = importlib.util.find_spec(pkg)
+        except Exception:  # noqa: BLE001 - best-effort DLL discovery
+            spec = None
+        if not spec or not spec.submodule_search_locations:
+            continue
+        for loc in spec.submodule_search_locations:
+            dll_dir = Path(loc) / "bin"
+            if dll_dir.is_dir():
+                os.add_dll_directory(str(dll_dir))
+                # ctranslate2 loads cuBLAS via legacy LoadLibrary, which
+                # searches PATH (not add_dll_directory dirs) -- prepend it too.
+                os.environ["PATH"] = str(dll_dir) + os.pathsep + os.environ["PATH"]
+
+
 def _whisper_transcribe(model_name: str):
+    _ensure_cuda_dlls()
     from faster_whisper import WhisperModel
 
     model = WhisperModel(model_name, device="cuda", compute_type="float16")

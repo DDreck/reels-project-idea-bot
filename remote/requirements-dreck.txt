@@ -1,3 +1,7 @@
 faster-whisper>=1.1.0
 opencv-python>=4.10.0
 pytesseract>=0.3.13
+# CUDA runtime DLLs for ctranslate2 on Windows (cuBLAS/cuDNN). Linux wheels
+# bundle these; Windows needs them explicitly.
+nvidia-cublas-cu12>=12.4
+nvidia-cudnn-cu12>=9.0
