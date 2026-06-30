@@ -23,6 +23,18 @@ def _place_keyframes(output_dir: Path, src_dir: Path, names) -> list[str]:
     return placed
 
 
+def _place_video(output_dir: Path, video_path: Path) -> str | None:
+    """Move the reel video into the vault's _videos dir; return its filename."""
+    if not video_path.exists():
+        return None
+    videos_dir = output_dir / "_videos"
+    videos_dir.mkdir(parents=True, exist_ok=True)
+    dest = videos_dir / video_path.name
+    dest.write_bytes(video_path.read_bytes())
+    video_path.unlink()
+    return video_path.name
+
+
 def file_reel(
     conn,
     config: Config,
@@ -42,12 +54,17 @@ def file_reel(
     if cls.is_new_category:
         categories.append_category(registry, cls.category, cls.category_description)
     frames = _place_keyframes(config.output_dir, video_path.parent, keyframes)
+    if config.keep_originals:
+        video_name = _place_video(config.output_dir, video_path)
+    else:
+        video_name = None
+        if video_path.exists():
+            video_path.unlink()
     note = notes.render_note(
-        reel, transcript, ocr, cls, date.today().isoformat(), keyframes=frames
+        reel, transcript, ocr, cls, date.today().isoformat(),
+        keyframes=frames, video=video_name,
     )
     note_path = config.output_dir / notes.note_filename(reel)
     note_path.write_text(note, encoding="utf-8")
-    if not config.keep_originals and video_path.exists():
-        video_path.unlink()
     db.mark_filed(conn, reel.pk)
     return note_path

@@ -35,17 +35,20 @@ def test_file_reel_writes_note_purges_video_marks_filed(tmp_path, dummy_config):
     assert "3d-print" in cats  # new category registered
 
 
-def test_file_reel_keep_originals(tmp_path, dummy_config):
+def test_file_reel_keep_originals_moves_video_into_vault(tmp_path, dummy_config):
     config = dummy_config
     object.__setattr__(config, "keep_originals", True)
     config.output_dir.mkdir(parents=True)
     conn = db.connect(config.db_path)
     db.enqueue(conn, _reel())
     db.mark_transcribed(conn, "1")
-    video = tmp_path / "1.mp4"
+    video = tmp_path / "sc1.mp4"
     video.write_bytes(b"x")
     cls = Classification("workout", "W", "s", [], "Health")
-    filing.file_reel(conn, config, _reel(), "t", "o", video_path=video,
-                     classifier=_classifier(cls))
-    assert video.exists()  # kept
+    note_path = filing.file_reel(conn, config, _reel(), "t", "o",
+                                 video_path=video, classifier=_classifier(cls))
+    assert not video.exists()  # moved out of the queue
+    saved = config.output_dir / "_videos" / "sc1.mp4"
+    assert saved.exists() and saved.read_bytes() == b"x"  # now in the vault
+    assert "![[sc1.mp4]]" in note_path.read_text(encoding="utf-8")  # embedded
     assert db.records_by_status(conn, "filed")[0]["pk"] == "1"
